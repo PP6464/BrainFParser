@@ -20,7 +20,7 @@ class Parser {
                 var nOpenSquareBracket = 1 // Number of [ encountered
                 var nCloseSquareBracket = 0 // Number of ] encountered
                 var index = 1
-                var loopString = ""
+                var loopString = "["
                 while (nOpenSquareBracket > nCloseSquareBracket /* When this condition fails, we must have reached the end of the loop */) {
                     loopString += codeCopy[index]
                     when (codeCopy[index]) {
@@ -29,6 +29,7 @@ class Parser {
                     }
                     index++
                 }
+                result.add(loopString)
             } else {
                 result.add(firstNotLoopingCodeMatch)
                 codeCopy = codeCopy.removePrefix(firstNotLoopingCodeMatch)
