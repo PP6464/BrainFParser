@@ -1,8 +1,11 @@
 package parser
 
+import java.util.Scanner
+
 class Parser {
-    val memory = (1..(System.getenv("BF_MEMORY_SIZE")?.toInt() ?: 30000)).map { 0 }.toMutableList()
-    var currentPointerIndex = 0
+    private val memory = (1..(System.getenv("BF_MEMORY_SIZE")?.toInt() ?: 30000)).map { 0 }.toMutableList()
+    private var currentPointerIndex = 0
+    private val scanner = Scanner(System.`in`)
 
     /*
         * params:
@@ -13,7 +16,7 @@ class Parser {
     private fun destructure(code: String): List<String> {
         val result = mutableListOf<String>()
         var codeCopy = code
-        val notLoopCodeRegex = Regex("([^\\[\\]]+)")
+        val notLoopCodeRegex = Regex("([^\\[\\]]*)")
         while (codeCopy.isNotBlank()) {
             val firstNotLoopingCodeMatch = notLoopCodeRegex.find(codeCopy)?.destructured?.component1() ?: ""
             if (firstNotLoopingCodeMatch.isBlank()) {
@@ -30,12 +33,51 @@ class Parser {
                     index++
                 }
                 result.add(loopString)
+                codeCopy = codeCopy.removePrefix(loopString)
             } else {
                 result.add(firstNotLoopingCodeMatch)
                 codeCopy = codeCopy.removePrefix(firstNotLoopingCodeMatch)
             }
         }
         return result
+    }
+
+    /*
+        * params:
+        * code: The loop to execute
+        * returns:
+        * void
+    */
+    private fun executeLoop(code: String) {
+        val destructured = destructure(code.removePrefix("[").removeSuffix("]"))
+        while (memory[currentPointerIndex] != 0) {
+            destructured.map {
+                if (it.startsWith("[")) {
+                    // command is a loop
+                    executeLoop(it)
+                } else {
+                    // command is not a loop
+                    it.map {char ->
+                        when (char) {
+                            '<' -> {
+                                if (currentPointerIndex != 0) currentPointerIndex-- else throw Error("Can't shift pointer index to index -1")
+                            }
+                            '>' -> {
+                                if (currentPointerIndex != memory.size - 1) currentPointerIndex++ else throw Error("Can't shift pointer index to index ${memory.size}")
+                            }
+                            ',' -> {
+                                val input = scanner.next().single()
+                                memory[currentPointerIndex] = input.code
+                            }
+                            '.' -> println(memory[currentPointerIndex].toChar())
+                            '+' -> memory[currentPointerIndex]++
+                            '-' -> memory[currentPointerIndex]--
+                            else -> {}
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /*
@@ -47,6 +89,33 @@ class Parser {
     fun parseBF(code: String) {
         if (code.isBlank()) return
         val destructured = destructure(code)
-        println(destructured)
+        destructured.map {
+            if (it.startsWith("[")) {
+                // command is a loop
+                executeLoop(it)
+            } else {
+                // command is normal command
+                it.map {char ->
+                    when (char) {
+                        '<' -> {
+                            if (currentPointerIndex != 0) currentPointerIndex-- else throw Error("Can't shift pointer index to index -1")
+                        }
+                        '>' -> {
+                            if (currentPointerIndex != memory.size - 1) currentPointerIndex++ else throw Error("Can't shift pointer index to index ${memory.size}")
+                        }
+                        ',' -> {
+                            val input = scanner.next().single()
+                            memory[currentPointerIndex] = input.code
+                        }
+                        '.' -> println(memory[currentPointerIndex].toChar())
+                        '+' -> memory[currentPointerIndex]++
+                        '-' -> memory[currentPointerIndex]--
+                        else -> {}
+                    }
+                }
+            }
+        }
+
+        scanner.close()
     }
 }
