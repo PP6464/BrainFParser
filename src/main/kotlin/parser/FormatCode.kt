@@ -8,6 +8,6 @@ val validChars = listOf('+', '-', '>', '<', '.', ',', '[', ']')
     * returns:
     * the code without any comments or whitespaces and on one line
 */
-fun formatCodeForParsing(code: String): String {
+fun formatAndValidateCodeForParsing(code: String): String {
     return code.filter { validChars.contains(it) }
 }
